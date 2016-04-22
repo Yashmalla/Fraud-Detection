@@ -1,5 +1,3 @@
-from matplotlib import cm
-from mpl_toolkits.mplot3d import axes3d
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from skimage import measure
 from sklearn import svm
@@ -19,40 +17,48 @@ Y_MAX = 10
 Z_MIN = -10
 Z_MAX = 10
 
+# Makes the line space that is required to draw the graph
 xx, yy, zz = np.meshgrid(np.linspace(X_MIN, X_MAX, SPACE_SAMPLING_POINTS),
                          np.linspace(Y_MIN, Y_MAX, SPACE_SAMPLING_POINTS),
                          np.linspace(Z_MIN, Z_MAX, SPACE_SAMPLING_POINTS))
-
+# Needs to be changed
+# Generation of random points
 X = 0.3 * np.random.randn(TRAIN_POINTS, 3)
 X_train = np.r_[X + 2, X - 2, X + [2, 2, 0]]
-
 
 X = 0.3 * np.random.randn(20, 3)
 X_test = np.r_[X + 2, X - 2, X + [2, 2, 0]]
 
 X_outliers = np.random.uniform(low=-4, high=4, size=(20, 3))
 
+# Defines the svm-OneClassSVM with the rbf regression
 clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.1)
 clf.fit(X_train)
 
+# predicting the values
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
 y_pred_outliers = clf.predict(X_outliers)
 
+# get the error size
 n_error_train = y_pred_train[y_pred_train == -1].size
 n_error_test = y_pred_test[y_pred_test == -1].size
 n_error_outliers = y_pred_outliers[y_pred_outliers == 1].size
 
+# Distance of the samples X, Y, Z to the sperating hyperplane
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel(), zz.ravel()])
 Z = Z.reshape(xx.shape)
 
 plt.title("Novelty Detection")
 ax = plt.gca(projection='3d')
 
+# draw the points on the 3D graph
 b1 = ax.scatter(X_train[:, 0], X_train[:, 1], X_train[:, 2], c='white')
 b2 = ax.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2], c='green')
 c = ax.scatter(X_outliers[:, 0], X_outliers[:, 1], X_outliers[:, 2], c='red')
 
+# Signifies the Learning Curve
+# IMP it should be better as the data set gets better
 verts, faces = measure.marching_cubes(Z, 0)
 verts = verts * \
     [X_MAX - X_MIN, Y_MAX - Y_MIN, Z_MAX - Z_MIN] / SPACE_SAMPLING_POINTS
